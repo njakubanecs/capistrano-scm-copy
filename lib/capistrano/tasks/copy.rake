@@ -2,7 +2,7 @@ namespace :copy do
 
   archive_name = "archive.tar.gz"
   include_dir  = fetch(:include_dir) || "*"
-  exclude_dir  = Array(fetch(:exclude_dir))
+  exclude_dir  = Array(fetch(:exclude_dir, %w(.git log spec tmp)))
 
   exclude_args = exclude_dir.map { |dir| "--exclude '#{dir}'"}
 
@@ -12,9 +12,9 @@ namespace :copy do
   tar_verbose = fetch(:tar_verbose, true) ? "v" : ""
 
   desc "Archive files to #{archive_name}"
-  file archive_name => FileList[include_dir].exclude(archive_name) do |t|
-    cmd = ["tar -c#{tar_verbose}zf #{t.name}", *exclude_args, *t.prerequisites]
-    sh cmd.join(' ')
+  file archive_name do
+    file_list = FileList[include_dir].exclude(*exclude_dir.concat([archive_name]))
+    sh "tar -c#{tar_verbose}zf #{archive_name} #{file_list}"
   end
 
   desc "Deploy #{archive_name} to release_path"
